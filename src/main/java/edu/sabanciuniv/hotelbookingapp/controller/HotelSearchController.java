@@ -3,6 +3,8 @@ package edu.sabanciuniv.hotelbookingapp.controller;
 import edu.sabanciuniv.hotelbookingapp.model.dto.HotelAvailabilityDTO;
 import edu.sabanciuniv.hotelbookingapp.model.dto.HotelSearchDTO;
 import edu.sabanciuniv.hotelbookingapp.service.HotelSearchService;
+import edu.sabanciuniv.hotelbookingapp.service.HotelService;
+import groovyjarjarantlr4.v4.parse.ANTLRParser.finallyClause_return;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,13 +28,14 @@ public class HotelSearchController {
     private final HotelSearchService hotelSearchService;
 
     @GetMapping("/search")
-    public String showSearchForm(@ModelAttribute("hotelSearchDTO") HotelSearchDTO hotelSearchDTO) {
-        return "hotelsearch/search";
+    public String showSearchForm(@ModelAttribute("hotelSearchDTO") HotelSearchDTO hotelSearchDTO,Model model) {
+        model.addAttribute("cities", hotelSearchService.findDistinctCities()); // Fetch distinct cities from DB
+    return "hotelsearch/search";
     }
 
 
     @PostMapping("/search")
-    public String findAvailableHotelsByCityAndDate(@Valid @ModelAttribute("hotelSearchDTO") HotelSearchDTO hotelSearchDTO, BindingResult result) {
+    public String findAvailableHotelsByCityAndDate(@Valid @ModelAttribute("hotelSearchDTO") HotelSearchDTO hotelSearchDTO, BindingResult result, Model model) {
         if (result.hasErrors()) {
             return "hotelsearch/search";
         }
@@ -45,6 +48,7 @@ public class HotelSearchController {
 
         // Redirect to a new GET endpoint with parameters for data fetching. Allows page refreshing
         return String.format("redirect:/search-results?city=%s&checkinDate=%s&checkoutDate=%s", hotelSearchDTO.getCity(), hotelSearchDTO.getCheckinDate(), hotelSearchDTO.getCheckoutDate());
+
     }
 
     @GetMapping("/search-results")

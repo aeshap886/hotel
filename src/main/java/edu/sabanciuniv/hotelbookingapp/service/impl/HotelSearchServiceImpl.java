@@ -5,6 +5,7 @@ import edu.sabanciuniv.hotelbookingapp.model.enums.RoomType;
 import edu.sabanciuniv.hotelbookingapp.model.dto.AddressDTO;
 import edu.sabanciuniv.hotelbookingapp.model.dto.HotelAvailabilityDTO;
 import edu.sabanciuniv.hotelbookingapp.model.dto.RoomDTO;
+import edu.sabanciuniv.hotelbookingapp.repository.AddressRepository;
 import edu.sabanciuniv.hotelbookingapp.repository.HotelRepository;
 import edu.sabanciuniv.hotelbookingapp.service.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -29,6 +30,12 @@ public class HotelSearchServiceImpl implements HotelSearchService {
     private final AddressService addressService;
     private final RoomService roomService;
     private final AvailabilityService availabilityService;
+    private final AddressRepository addressRepository;
+    
+    @Override
+    public List<String> findDistinctCities(){
+    	return addressRepository.findDistinctCities();
+    }
 
     @Override
     public List<HotelAvailabilityDTO> findAvailableHotelsByCityAndDate(String city, LocalDate checkinDate, LocalDate checkoutDate) {

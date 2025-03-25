@@ -35,4 +35,7 @@ public interface HotelService {
 
     HotelDTO mapHotelToHotelDto(Hotel hotel);
 
+
+    
+
 }

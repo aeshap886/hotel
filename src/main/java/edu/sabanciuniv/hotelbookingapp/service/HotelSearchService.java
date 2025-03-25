@@ -13,4 +13,6 @@ public interface HotelSearchService {
     HotelAvailabilityDTO findAvailableHotelById(Long hotelId, LocalDate checkinDate, LocalDate checkoutDate);
 
     HotelAvailabilityDTO mapHotelToHotelAvailabilityDto(Hotel hotel, LocalDate checkinDate, LocalDate checkoutDate);
+    
+    List<String>findDistinctCities();
 }

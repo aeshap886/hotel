@@ -11,6 +11,7 @@ import java.time.LocalDate;
 
 @Data
 @Builder
+
 public class HotelSearchDTO {
 
     @NotBlank(message = "City cannot be empty")
@@ -23,4 +24,5 @@ public class HotelSearchDTO {
 
     @NotNull(message = "Check-out date cannot be empty")
     private LocalDate checkoutDate;
+
 }

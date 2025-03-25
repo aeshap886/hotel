@@ -18,10 +18,14 @@ public interface HotelRepository extends JpaRepository<Hotel, Long> {
     List<Hotel> findAllByHotelManager_Id(Long id);
 
     Optional<Hotel> findByIdAndHotelManager_Id(Long id, Long managerId);
-
+    
+   
     @Query("SELECT h FROM Hotel h WHERE h.address.city = :city")
     List<Hotel> findHotelsByCity(@Param("city") String city);
-
+    
+    @Query("SELECT DISTINCT h.address.city FROM Hotel h")
+	List<String> findDistinctCities();
+    
     @Query("SELECT h " +
             "FROM Hotel h " +
             "JOIN h.rooms r " +

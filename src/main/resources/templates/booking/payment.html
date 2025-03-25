@@ -3,6 +3,14 @@
       layout:decorate="~{/layout/layout-main}">
 <head>
     <title>Complete Payment</title>
+      <meta
+  http-equiv="Content-Security-Policy"
+  content="
+    default-src 'self' https://*.paypal.com https://*.paypalobjects.com;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://*.paypal.com https://*.paypalobjects.com;
+    style-src 'self' 'unsafe-inline';"
+ />
+         <script src="https://www.paypal.com/sdk/js?client-id=AZlq4512JEysxdFRBp4qIs5sGZrYeWVwTw_mydMpamctnIVcBU7W4462fNoG5dDAK6QQeZUBrmSP_Qto&currency=USD"></script>
 </head>
 <body>
 <th:block layout:fragment="content">
@@ -72,7 +80,7 @@
                                 <p class="text-danger" th:if="${#fields.hasErrors('cardholderName')}"
                                    th:errors="*{cardholderName}"></p>
                             </div>
-                            <div class="form-group mb-3">
+                             <div class="form-group mb-3">
                                 <label class="form-label" for="cardNumber">Card Number</label>
                                 <input class="form-control" id="cardNumber" type="text" th:field="*{cardNumber}" required>
                                 <p class="text-danger" th:if="${#fields.hasErrors('cardNumber')}" th:errors="*{cardNumber}"></p>
@@ -121,6 +129,6 @@
             this.value = value.slice(0, 5); // Limit to 5 characters, including the '/'
         });
     </script>
-</th:block>
+</th:block> 
 </body>
 </html>

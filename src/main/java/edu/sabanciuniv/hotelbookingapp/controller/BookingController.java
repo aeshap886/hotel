@@ -3,6 +3,7 @@ package edu.sabanciuniv.hotelbookingapp.controller;
 import edu.sabanciuniv.hotelbookingapp.model.dto.*;
 import edu.sabanciuniv.hotelbookingapp.service.BookingService;
 import edu.sabanciuniv.hotelbookingapp.service.HotelService;
+import edu.sabanciuniv.hotelbookingapp.service.PayPalService;
 import edu.sabanciuniv.hotelbookingapp.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -31,6 +33,8 @@ public class BookingController {
     private final HotelService hotelService;
     private final UserService userService;
     private final BookingService bookingService;
+    @Autowired
+    private PayPalService payPalService;
 
     @PostMapping("/initiate")
     public String initiateBooking(@ModelAttribute BookingInitiationDTO bookingInitiationDTO, HttpSession session) {
@@ -116,5 +120,49 @@ public class BookingController {
         log.info("Fetched logged in user ID: {}", userDTO.getId());
         return userDTO.getId();
     }
-
+    @PostMapping("/payment/paypal")
+public String processPayPalPayment(@ModelAttribute PayPalPaymentDTO payPalPaymentDTO,
+                                  HttpSession session,
+                                  RedirectAttributes redirectAttributes) {
+    
+    log.info("Processing PayPal payment with orderId: {} and payerId: {}", 
+             payPalPaymentDTO.getPaypalOrderId(), 
+             payPalPaymentDTO.getPaypalPayerId());
+    
+    // Retrieve booking details from session
+    BookingInitiationDTO bookingInitiationDTO = (BookingInitiationDTO) session.getAttribute("bookingInitiationDTO");
+    
+    if (bookingInitiationDTO == null) {
+        redirectAttributes.addFlashAttribute("errorMessage", "Your session has expired. Please start a new search.");
+        return "redirect:/search";
+    }
+    
+    // Verify PayPal payment
+    boolean paymentVerified = payPalService.verifyPayment(
+        payPalPaymentDTO.getPaypalOrderId(),
+        payPalPaymentDTO.getPaypalPayerId()
+    );
+    
+    if (!paymentVerified) {
+        redirectAttributes.addFlashAttribute("errorMessage", "PayPal payment verification failed.");
+        return "redirect:/booking/payment";
+    }
+    
+    try {
+        Long userId = getLoggedInUserId();
+        
+        // Set payment method to PayPal before confirming booking
+        bookingInitiationDTO.setPaymentMethod("PayPal");
+        bookingInitiationDTO.setPaymentReference(payPalPaymentDTO.getPaypalOrderId());
+        
+        BookingDTO bookingDTO = bookingService.confirmBooking(bookingInitiationDTO, userId);
+        redirectAttributes.addFlashAttribute("bookingDTO", bookingDTO);
+        
+        return "redirect:/booking/confirmation";
+    } catch (Exception e) {
+        log.error("An error occurred while processing PayPal payment", e);
+        redirectAttributes.addFlashAttribute("errorMessage", "An unexpected error occurred. Please try again later.");
+        return "redirect:/booking/payment";
+    }
+}
 }

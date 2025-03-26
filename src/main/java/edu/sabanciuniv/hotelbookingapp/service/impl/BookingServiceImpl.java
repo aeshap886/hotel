@@ -5,6 +5,9 @@ import edu.sabanciuniv.hotelbookingapp.model.dto.AddressDTO;
 import edu.sabanciuniv.hotelbookingapp.model.dto.BookingDTO;
 import edu.sabanciuniv.hotelbookingapp.model.dto.BookingInitiationDTO;
 import edu.sabanciuniv.hotelbookingapp.model.dto.RoomSelectionDTO;
+import edu.sabanciuniv.hotelbookingapp.model.enums.Currency;
+import edu.sabanciuniv.hotelbookingapp.model.enums.PaymentMethod;
+import edu.sabanciuniv.hotelbookingapp.model.enums.PaymentStatus;
 import edu.sabanciuniv.hotelbookingapp.repository.BookingRepository;
 import edu.sabanciuniv.hotelbookingapp.service.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -46,15 +49,55 @@ public class BookingServiceImpl implements BookingService {
         return bookingRepository.save(booking);
     }
 
-    @Override
+        @Override
     @Transactional
-    public BookingDTO confirmBooking(BookingInitiationDTO bookingInitiationDTO, Long customerId) {
-        Booking savedBooking = this.saveBooking(bookingInitiationDTO, customerId);
-        Payment savedPayment = paymentService.savePayment(bookingInitiationDTO, savedBooking);
-        savedBooking.setPayment(savedPayment);
-        bookingRepository.save(savedBooking);
-        availabilityService.updateAvailabilities(bookingInitiationDTO.getHotelId(), bookingInitiationDTO.getCheckinDate(),
-                bookingInitiationDTO.getCheckoutDate(), bookingInitiationDTO.getRoomSelections());
+    public BookingDTO confirmBookingWithPayment(BookingInitiationDTO bookingInitiationDTO, 
+                                              Long customerId, 
+                                              String paymentMethod, 
+                                              String paymentReference) {
+        log.info("Confirming booking with payment method: {} and reference: {}", paymentMethod, paymentReference);
+        
+        // Validate the booking dates
+        validateBookingDates(bookingInitiationDTO.getCheckinDate(), bookingInitiationDTO.getCheckoutDate());
+        
+        // Find the customer
+        Customer customer = customerService.findByUserId(customerId)
+                .orElseThrow(() -> new EntityNotFoundException("Customer not found with user ID: " + customerId));
+        
+        // Find the hotel
+        Hotel hotel = hotelService.findHotelById(bookingInitiationDTO.getHotelId())
+                .orElseThrow(() -> new EntityNotFoundException("Hotel not found with ID: " + bookingInitiationDTO.getHotelId()));
+        
+        // Create the booking
+        Booking booking = mapBookingInitDtoToBookingModel(bookingInitiationDTO, customer, hotel);
+        
+        // Update the room availabilities
+        availabilityService.updateAvailabilities(
+                hotel.getId(), 
+                bookingInitiationDTO.getCheckinDate(), 
+                bookingInitiationDTO.getCheckoutDate(), 
+                bookingInitiationDTO.getRoomSelections());
+        
+        // Save the booking to get an ID
+        Booking savedBooking = bookingRepository.save(booking);
+        log.info("Booking saved with ID: {}", savedBooking.getId());
+        
+        // Create and associate payment with the specified method
+        Payment payment = Payment.builder()
+                .booking(savedBooking)
+                .totalPrice(bookingInitiationDTO.getTotalPrice())
+                .paymentMethod(PaymentMethod.valueOf(paymentMethod.toUpperCase()))
+                .paymentStatus(PaymentStatus.COMPLETED)
+                .transactionId(paymentReference)
+                .currency(Currency.USD)
+                .build();
+        
+        savedBooking.setPayment(payment);
+        
+        // Save the booking again with the payment
+        savedBooking = bookingRepository.save(savedBooking);
+        log.info("Booking payment processed and saved with method: {}", paymentMethod);
+        
         return mapBookingModelToBookingDto(savedBooking);
     }
 
@@ -170,6 +213,12 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return booking;
+    }
+
+    @Override
+    public BookingDTO confirmBooking(BookingInitiationDTO bookingInitiationDTO, Long customerId) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'confirmBooking'");
     }
 
 }

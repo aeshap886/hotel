@@ -34,5 +34,9 @@ public class BookingDTO {
     private String customerEmail;
     private PaymentStatus paymentStatus;
     private PaymentMethod paymentMethod;
+    public void setUserId(Long id2) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setUserId'");
+    }
     
 }

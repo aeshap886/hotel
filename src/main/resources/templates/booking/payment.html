@@ -66,7 +66,7 @@
                 <div class="card mb-2">
                     <div class="card-body">
                         <h4><strong>Total Price:</strong></h4>
-                        <h4 th:utext="'$ ' + ${#numbers.formatDecimal(bookingInitiationDTO.totalPrice, 0, 'COMMA', 2, 'POINT')}">$0.00</h4>
+                        <h4 id="total-price" th:utext="'$ ' + ${#numbers.formatDecimal(bookingInitiationDTO.totalPrice, 0, 'COMMA', 2, 'POINT')}">$0.00</h4>
                     </div>
                 </div>
                 <!-- Payment Form -->
@@ -104,6 +104,16 @@
                                 <button type="submit" class="btn btn-primary">Complete Booking</button>
                             </div>
                         </form>
+                        <div class="mt-3">
+                            <hr>
+                            <h5 class="mb-3">Or pay with PayPal</h5>
+                            <div id="paypal-button-container"></div>
+                            <form id="paypal-form" action="/booking/payment/paypal" method="post" style="display: none;">
+                                <input type="hidden" name="paypalOrderId" id="paypal-order-id">
+                                <input type="hidden" name="paypalPayerId" id="paypal-payer-id">
+                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -128,7 +138,49 @@
             }
             this.value = value.slice(0, 5); // Limit to 5 characters, including the '/'
         });
+        
+        // Add this at the top of your script section in payment.html
+console.log("PayPal SDK loaded:", typeof paypal !== 'undefined');
+
+// And modify your button initialization to include error handling
+paypal.Buttons({
+    // Add error logging
+    onInit: function(data, actions) {
+        console.log("PayPal button initialized");
+    },
+    createOrder: function(data, actions) {
+        console.log("Creating PayPal order");
+
+        // Retrieve the total price element by ID
+        const totalPriceElement = document.getElementById('total-price');
+        if (!totalPriceElement) {
+            console.error("Total price element not found");
+            throw new Error("Total price element not found");
+        }
+
+        // Parse the total price
+        const totalPrice = parseFloat(totalPriceElement.innerText.replace('$', '').replace(',', ''));
+        console.log("Total price:", totalPrice);
+
+        return actions.order.create({
+            purchase_units: [{
+                amount: {
+                    value: totalPrice.toFixed(2)
+                }
+            }]
+        }).then(function(orderId) {
+            console.log("Order created:", orderId);
+            return orderId;
+        }).catch(function(error) {
+            console.error("Error creating order:", error);
+            throw error;
+        });
+    },
+    onError: function(err) {
+        console.error("PayPal error:", err);
+    }
+}).render('#paypal-button-container');
     </script>
-</th:block> 
+</th:block>
 </body>
 </html>

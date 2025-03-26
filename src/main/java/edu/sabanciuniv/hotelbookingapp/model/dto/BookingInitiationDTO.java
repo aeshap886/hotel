@@ -22,5 +22,6 @@ public class BookingInitiationDTO {
     private long durationDays;
     private List<RoomSelectionDTO> roomSelections = new ArrayList<>();
     private BigDecimal totalPrice;
-
+    private String paymentMethod;
+    private String paymentReference;
 }

@@ -10,7 +10,26 @@ public interface BookingService {
 
     Booking saveBooking(BookingInitiationDTO bookingInitiationDTO, Long customerId);
 
+    /**
+     * Confirms a booking with payment details
+     * @param bookingInitiationDTO The booking initiation data including payment method
+     * @param customerId The ID of the customer making the booking
+     * @return The confirmed booking as a DTO
+     */
     BookingDTO confirmBooking(BookingInitiationDTO bookingInitiationDTO, Long customerId);
+    
+    /**
+     * Confirms a booking with specific payment details
+     * @param bookingInitiationDTO The booking initiation data
+     * @param customerId The ID of the customer making the booking
+     * @param paymentMethod The payment method (e.g., "CREDIT_CARD", "PAYPAL")
+     * @param paymentReference The payment reference or transaction ID
+     * @return The confirmed booking as a DTO
+     */
+    BookingDTO confirmBookingWithPayment(BookingInitiationDTO bookingInitiationDTO, 
+                                       Long customerId,
+                                       String paymentMethod, 
+                                       String paymentReference);
 
     List<BookingDTO> findAllBookings();
 
@@ -25,5 +44,4 @@ public interface BookingService {
     BookingDTO findBookingByIdAndManagerId(Long bookingId, Long managerId);
 
     BookingDTO mapBookingModelToBookingDto(Booking booking);
-
 }
